@@ -1,1 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Priority Task Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Task Tracker</h1>
+        <div class="task-input">
+            <input type="text" id="taskInput" placeholder="What needs to be done?">
+            <select id="prioritySelect">
+                <option value="low">Low Priority</option>
+                <option value="medium">Medium Priority</option>
+                <option value="high">High Priority</option>
+            </select>
+            <button id="addTaskBtn"><i class="fas fa-plus"></i> Add Task</button>
+        </div>
 
+        <div class="task-filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="active">Active</button>
+            <button class="filter-btn" data-filter="completed">Completed</button>
+        </div>
+
+        <div class="task-counter">
+            <span id="taskCount">0 tasks remaining</span>
+        </div>
+
+        <div class="task-list" id="taskList">
+            <!-- Tasks will be added here dynamically -->
+        </div>
+
+        <div class="social-links">
+            <a href="https://github.com/sinzn" target="_blank" class="social-btn instagram"><i class="fab fa-github"></i> For Code </a>
+            <a href="http://www.sinzn.fun/" target="_blank" class="social-btn youtube"><i class="fab fa-website"></i> Visit Website </a>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

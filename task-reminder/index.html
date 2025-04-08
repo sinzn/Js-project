@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reminder Clock</title>
+  <style>
+    :root {
+      --bg-color: #000;
+      --text-color: #fff;
+      --card-bg: #111;
+      --border-color: #fff;
+    }
+
+    body.light {
+      --bg-color: #fff;
+      --text-color: #000;
+      --card-bg: #f0f0f0;
+      --border-color: #000;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      padding: 40px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .clock {
+      font-size: 48px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .date {
+      font-size: 24px;
+      margin-bottom: 30px;
+    }
+
+    .reminder-form input,
+    .reminder-form button,
+    .reminder-form select {
+      padding: 12px;
+      margin: 5px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .reminder-form input[type="text"],
+    .reminder-form select {
+      background-color: var(--card-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+    }
+
+    .reminder-form input[type="time"] {
+      background-color: var(--card-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px 16px;
+      font-size: 16px;
+      appearance: none;
+      position: relative;
+    }
+
+    .reminder-form input[type="time"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+    }
+
+    .reminder-form button {
+      background-color: var(--text-color);
+      color: var(--bg-color);
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .reminder-form button:hover {
+      opacity: 0.8;
+    }
+
+    .reminder-list {
+      margin-top: 40px;
+    }
+
+    .reminder-item {
+      margin: 10px auto;
+      padding: 15px;
+      width: 60%;
+      border-radius: 8px;
+      color: var(--text-color);
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: var(--text-color);
+      color: var(--bg-color);
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .theme-toggle:hover {
+      opacity: 0.8;
+    }
+
+    .priority-high { background: #ff4d4d; }
+    .priority-medium { background: #ffc107; }
+    .priority-low { background: #28a745; }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+
+  <div class="clock" id="clock"></div>
+  <div class="date" id="date"></div>
+
+  <div class="reminder-form">
+    <input type="text" id="label" placeholder="Reminder Label" />
+    <input type="time" id="time" />
+    <select id="priority">
+      <option value="low">Low</option>
+      <option value="medium">Medium</option>
+      <option value="high">High</option>
+    </select>
+    <button onclick="addReminder()">Add Reminder</button>
+  </div>
+
+  <div class="reminder-list" id="reminderList"></div>
+
+  <script>
+    const clock = document.getElementById("clock");
+    const dateEl = document.getElementById("date");
+    const reminderList = document.getElementById("reminderList");
+    let reminders = JSON.parse(localStorage.getItem("reminders") || "[]");
+
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString();
+      const dateStr = now.toLocaleDateString();
+      clock.textContent = timeStr;
+      dateEl.textContent = dateStr;
+      checkReminders(now);
+    }
+
+    function addReminder() {
+      const label = document.getElementById("label").value;
+      const time = document.getElementById("time").value;
+      const priority = document.getElementById("priority").value;
+      if (!label || !time) return alert("Enter label, time, and priority");
+
+      reminders.push({ label, time, priority, notified: false, completed: false });
+      localStorage.setItem("reminders", JSON.stringify(reminders));
+      renderReminders();
+      document.getElementById("label").value = "";
+      document.getElementById("time").value = "";
+    }
+
+    function renderReminders() {
+      reminderList.innerHTML = "";
+      reminders.forEach((reminder, i) => {
+        const div = document.createElement("div");
+        div.className = `reminder-item priority-${reminder.priority}`;
+        div.innerHTML = `
+          <span>${reminder.time} - ${reminder.label} ${reminder.completed ? '(Completed)' : ''}</span>
+          <div>
+            <button onclick="deleteReminder(${i})">🗑</button>
+            <button onclick="markCompleted(${i})">✔</button>
+          </div>
+        `;
+        reminderList.appendChild(div);
+      });
+    }
+
+    function deleteReminder(index) {
+      reminders.splice(index, 1);
+      localStorage.setItem("reminders", JSON.stringify(reminders));
+      renderReminders();
+    }
+
+    function markCompleted(index) {
+      reminders[index].completed = true;
+      localStorage.setItem("reminders", JSON.stringify(reminders));
+      renderReminders();
+    }
+
+    function checkReminders(now) {
+      const currentTime = now.toTimeString().slice(0, 5);
+      reminders.forEach((reminder, i) => {
+        if (reminder.time === currentTime && !reminder.notified && !reminder.completed) {
+          showAlert(reminder.label, i);
+          reminders[i].notified = true;
+          localStorage.setItem("reminders", JSON.stringify(reminders));
+        }
+      });
+    }
+
+    function showAlert(message, index) {
+      const popup = document.createElement("div");
+      popup.style.position = "fixed";
+      popup.style.top = "50%";
+      popup.style.left = "50%";
+      popup.style.transform = "translate(-50%, -50%)";
+      popup.style.background = "var(--card-bg)";
+      popup.style.color = "var(--text-color)";
+      popup.style.padding = "20px";
+      popup.style.border = "2px solid var(--text-color)";
+      popup.style.borderRadius = "10px";
+      popup.style.zIndex = 1000;
+      popup.innerHTML = `
+        <p>Reminder: ${message}</p>
+        <button onclick="document.body.removeChild(this.parentElement)">Stop</button>
+        <button onclick="snoozeReminder(${index}, this.parentElement)">Remind Me Later</button>
+      `;
+      document.body.appendChild(popup);
+    }
+
+    function snoozeReminder(index, popup) {
+      const newTime = new Date();
+      newTime.setMinutes(newTime.getMinutes() + 1);
+      const hh = String(newTime.getHours()).padStart(2, '0');
+      const mm = String(newTime.getMinutes()).padStart(2, '0');
+      reminders[index].time = `${hh}:${mm}`;
+      reminders[index].notified = false;
+      localStorage.setItem("reminders", JSON.stringify(reminders));
+      popup.remove();
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("light");
+    }
+
+    setInterval(updateClock, 1000);
+    renderReminders();
+  </script>
+</body>
+</html>
